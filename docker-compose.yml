@@ -4,15 +4,22 @@ volumes:
   prometheus_data: {}
   grafana_data: {}
 
+networks:
+  monitornet:
+    name: monitornet
+
 services:
   prometheus:
+    networks:
+      - monitornet
+    container_name: prometheus
     image: prom/prometheus
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - /home/michael/monitoring/prometheus/:/etc/prometheus/
       - prometheus_data:/prometheus
-    command:
-      - '-config.file=/etc/prometheus/prometheus.yml'
-      - '-storage.local.path=/prometheus'
+#    command:
+#      - /home/michael/monitoring/prometheus/prometheus.yml=/etc/prometheus/prometheus.yml
+#      - /home/michael/monitoring/prometheus=/prometheus
     expose:
       - 9090
     ports:
@@ -23,18 +30,27 @@ services:
       - node-exporter
 
   snmp-exporter:
+    networks:
+      - monitornet
+    container_name: snmpexporter
     image: amkay/snmp_exporter
     volumes:
-      - ./snmp_exporter/:/etc/snmp_exporter/
+      - /home/michael/monitoring/snmp_exporter/:/etc/snmp_exporter/
     expose:
       - 9116
 
   node-exporter:
+    networks:
+      - monitornet
+    container_name: nodeexporter
     image: prom/node-exporter
     expose:
       - 9100
 
   cadvisor:
+    networks:
+      - monitornet
+    container_name: cadvisor
     image: google/cadvisor
     volumes:
       - /:/rootfs:ro
@@ -45,7 +61,10 @@ services:
       - 8080
 
   grafana:
-    image: grafana/grafana
+    networks:
+      - monitornet
+    container_name: grafana
+    image: grafana/grafana-enterprise
     depends_on:
       - prometheus
     expose:
@@ -54,5 +73,5 @@ services:
       - 3000:3000
     volumes:
       - grafana_data:/var/lib/grafana
-    env_file:
-      - ./grafana/config.env
+#    env_file:
+#      - /home/michael/monitoring/grafana/config.env
